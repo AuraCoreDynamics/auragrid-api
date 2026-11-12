@@ -1,0 +1,139 @@
+{
+  "HealthStatus": {
+    "status": "Healthy",
+    "nodeId": "node-alpha",
+    "version": "4.3.0"
+  },
+  "CellConfigMetadata": {
+    "keyCount": 3,
+    "maxVersion": 12,
+    "lastModified": "2026-11-12T10:00:00Z",
+    "lastModifiedByNodeId": "node-alpha",
+    "synchronizedNodeCount": 2,
+    "storagePath": ".sprout/config/cell_config.json"
+  },
+  "CellConfigAllResponse": {
+    "config": {
+      "cell/id": "cell-primary",
+      "filesystem/grid-root": "//nas/auracell"
+    },
+    "metadata": {
+      "keyCount": 2,
+      "maxVersion": 5,
+      "lastModified": "2026-11-12T10:00:00Z"
+    }
+  },
+  "CellMember": {
+    "nodeId": "node-alpha",
+    "hostName": "workstation-01",
+    "state": "Healthy",
+    "address": "127.0.0.1:5100",
+    "joinedAt": "2026-11-12T09:50:00Z",
+    "lastHeartbeat": "2026-11-12T10:00:00Z",
+    "registeredServices": ["model-coordinator"],
+    "metadata": {
+      "gpu.vram.gb": "24"
+    },
+    "incarnation": 1
+  },
+  "CellMembersResponse": {
+    "members": [
+      {
+        "nodeId": "node-alpha",
+        "hostName": "workstation-01",
+        "state": "Healthy",
+        "lastHeartbeat": "2026-11-12T10:00:00Z"
+      }
+    ]
+  },
+  "CellMembershipMetadata": {
+    "healthyCount": 1,
+    "totalCount": 1,
+    "lastUpdated": "2026-11-12T10:00:00Z",
+    "incarnationNumber": 1,
+    "protocol": "SWIM"
+  },
+  "GovernanceDecision": {
+    "isPermitted": true,
+    "denyReason": null,
+    "requiresApproval": false,
+    "metadata": {
+      "policy": "user-space-opt-in"
+    },
+    "expiresAt": null
+  },
+  "TopicsResponse": {
+    "topics": ["jobs.indexing", "telemetry.tattle"]
+  },
+  "AuraEventDto": {
+    "eventId": "evt-0001",
+    "topicId": "jobs.indexing",
+    "sequenceNumber": 1,
+    "timestamp": "2026-11-12T10:00:00Z",
+    "sourceNodeId": "node-alpha",
+    "eventType": "BatchStarted",
+    "payload": "eyJiYXRjaCI6MX0="
+  },
+  "ConsumeEventsResponse": {
+    "events": [
+      {
+        "eventId": "evt-0001",
+        "topicId": "jobs.indexing",
+        "sequenceNumber": 1,
+        "timestamp": "2026-11-12T10:00:00Z",
+        "sourceNodeId": "node-alpha",
+        "eventType": "BatchStarted",
+        "payload": "eyJiYXRjaCI6MX0="
+      }
+    ]
+  },
+  "LeaseRenewResponse": {
+    "extended": true,
+    "conflict": null
+  },
+  "ServiceEndpoint": {
+    "serviceId": "model-coordinator:EmbeddingService",
+    "serviceName": "EmbeddingService",
+    "nodeId": "node-alpha",
+    "endpointUrl": "http://127.0.0.1:8088/api/EmbeddingService/",
+    "grpcEndpoint": "http://127.0.0.1:8088/api/EmbeddingService/",
+    "openApiEndpoint": null,
+    "mcpEndpoint": null,
+    "capabilities": ["embed"],
+    "metadata": {
+      "masId": "model-coordinator"
+    }
+  },
+  "DiscoverEndpointsResponse": {
+    "endpoints": [
+      {
+        "serviceId": "model-coordinator:EmbeddingService",
+        "serviceName": "EmbeddingService",
+        "nodeId": "node-alpha",
+        "endpointUrl": "http://127.0.0.1:8088/api/EmbeddingService/"
+      }
+    ]
+  },
+  "ServicePortRequest": {
+    "serviceName": "EmbeddingService",
+    "port": 50551,
+    "grpcPort": 50551,
+    "scheme": "http",
+    "methods": ["EmbedText"]
+  },
+  "ServicePortResponse": {
+    "registered": true,
+    "serviceName": "EmbeddingService",
+    "port": 50551
+  },
+  "StorageMetadataResponse": {
+    "isDirectory": false,
+    "size": 1024,
+    "lastModified": "2026-11-12T10:00:00Z"
+  },
+  "ChaosStatusResponse": {
+    "gossipSuspended": false,
+    "storageFaultEnabled": false,
+    "faultedNodes": []
+  }
+}

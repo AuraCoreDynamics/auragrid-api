@@ -1,0 +1,1314 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AuraGrid & AuraSprout Loopback IPC Bridge API",
+    "version": "4.3.0",
+    "description": "Canonical OpenAPI 3.1 contract for the loopback HTTP/IPC bridge (/health, /api/health, /ready, /cell/*) shared by AuraGrid (.NET 10), auragrid-py, and AuraSprout."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:0",
+      "description": "Local loopback IPC bridge configured via AURAGRID_IPC_PORT / AURAGRID_LOCAL_URL"
+    }
+  ],
+  "security": [
+    { "IpcTokenHeader": [] }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Liveness check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process alive",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthStatus" } } }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "summary": "Node health status check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy response",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthStatus" } } }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "summary": "Readiness probe",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Bridge ready to serve MAS requests",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthStatus" } } }
+          }
+        }
+      }
+    },
+    "/cell/config": {
+      "get": {
+        "summary": "Get all cell configuration keys and metadata",
+        "responses": {
+          "200": {
+            "description": "Configuration map and metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellConfigAllResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/config/_metadata": {
+      "get": {
+        "summary": "Get cell configuration metadata",
+        "responses": {
+          "200": {
+            "description": "Configuration state metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellConfigMetadata" } } }
+          }
+        }
+      }
+    },
+    "/cell/config/{key}": {
+      "parameters": [
+        { "name": "key", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get cell configuration value by key",
+        "responses": {
+          "200": {
+            "description": "Configuration value",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellConfigValueResponse" } } }
+          },
+          "404": { "description": "Key not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      },
+      "put": {
+        "summary": "Set cell configuration key",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellConfigValueRequest" } } }
+        },
+        "responses": {
+          "204": { "description": "Updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete cell configuration key",
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RemovedResponse" } } }
+          },
+          "404": { "description": "Key not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/members": {
+      "get": {
+        "summary": "List cell members",
+        "parameters": [
+          { "name": "includeUnhealthy", "in": "query", "required": false, "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member list or array of CellMember objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/CellMembersResponse" },
+                    { "type": "array", "items": { "$ref": "#/components/schemas/CellMember" } }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cell/members/_healthy-count": {
+      "get": {
+        "summary": "Get healthy cell member count",
+        "responses": {
+          "200": {
+            "description": "Count payload",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HealthyCountResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/members/_metadata": {
+      "get": {
+        "summary": "Get cell membership metadata",
+        "responses": {
+          "200": {
+            "description": "Membership metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellMembershipMetadata" } } }
+          }
+        }
+      }
+    },
+    "/cell/members/{nodeId}": {
+      "parameters": [
+        { "name": "nodeId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get member information by nodeId",
+        "responses": {
+          "200": {
+            "description": "Member details",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellMember" } } }
+          },
+          "404": { "description": "Member not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/local-node": {
+      "get": {
+        "summary": "Get local node membership record",
+        "responses": {
+          "200": {
+            "description": "Local node details",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CellMember" } } }
+          }
+        }
+      }
+    },
+    "/cell/governance/can-deploy": {
+      "post": {
+        "summary": "Evaluate deployment permission",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceAppRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance decision",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceDecision" } } }
+          }
+        }
+      }
+    },
+    "/cell/governance/can-remove": {
+      "post": {
+        "summary": "Evaluate removal permission",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceAppRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance decision",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceDecision" } } }
+          }
+        }
+      }
+    },
+    "/cell/governance/can-reconfigure": {
+      "post": {
+        "summary": "Evaluate reconfiguration permission",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceResourceRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Governance decision",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GovernanceDecision" } } }
+          }
+        }
+      }
+    },
+    "/cell/governance/roles/{userId}": {
+      "parameters": [
+        { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get roles assigned to userId",
+        "responses": {
+          "200": {
+            "description": "Assigned role list",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserRolesResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/governance/audit": {
+      "get": {
+        "summary": "Read governance audit trail (C# ProxyWorker and Python GovernanceClient)",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 100, "minimum": 1 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AuditEntry" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cell/events/topics": {
+      "get": {
+        "summary": "List event WAL topics",
+        "responses": {
+          "200": {
+            "description": "Topic list wrapper",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopicsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/events/topics/{topicId}/exists": {
+      "parameters": [
+        { "name": "topicId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Check if a WAL topic exists",
+        "responses": {
+          "200": {
+            "description": "Existence flag",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExistsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/events/markers/{consumerId}/{topicId}": {
+      "parameters": [
+        { "name": "consumerId", "in": "path", "required": true, "schema": { "type": "string" } },
+        { "name": "topicId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get WAL consumer marker (returns sequenceNumber null when uncommitted)",
+        "responses": {
+          "200": {
+            "description": "Consumer marker",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WalMarker" } } }
+          }
+        }
+      },
+      "put": {
+        "summary": "Commit WAL consumer marker",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SetMarkerRequest" } } }
+        },
+        "responses": {
+          "204": { "description": "Marker committed" }
+        }
+      }
+    },
+    "/cell/events/{topicId}": {
+      "parameters": [
+        { "name": "topicId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Publish event to WAL topic",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishEventRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Published event record",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuraEventDto" } } }
+          }
+        }
+      },
+      "get": {
+        "summary": "Consume events from WAL topic",
+        "parameters": [
+          { "name": "afterSequence", "in": "query", "required": false, "schema": { "type": "integer", "default": 0 } },
+          { "name": "count", "in": "query", "required": false, "schema": { "type": "integer", "default": 100 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consumed events wrapper",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConsumeEventsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/lease/acquire": {
+      "post": {
+        "summary": "Attempt to acquire CellSingleton lease",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseAcquireRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Lease acquisition outcome",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseAcquisitionResult" } } }
+          }
+        }
+      }
+    },
+    "/cell/lease/renew": {
+      "post": {
+        "summary": "Renew existing lease using fencing token",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseRenewRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Renewal result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseRenewResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/lease/release": {
+      "post": {
+        "summary": "Release held lease",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseReleaseRequest" } } }
+        },
+        "responses": {
+          "204": { "description": "Released" }
+        }
+      }
+    },
+    "/cell/lease/marker/{masId}": {
+      "parameters": [
+        { "name": "masId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get last known lease WAL marker",
+        "responses": {
+          "200": {
+            "description": "Marker wrapper",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseMarkerResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/lease/{masId}": {
+      "parameters": [
+        { "name": "masId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get active lease record or HTTP 404 if released/unheld",
+        "responses": {
+          "200": {
+            "description": "Active lease",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/LeaseRecordDto" },
+                    { "$ref": "#/components/schemas/LeaseInfo" }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "description": "Lease not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/collaboration/status/{masId}": {
+      "parameters": [
+        { "name": "masId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get user-space collaboration lease status",
+        "responses": {
+          "200": {
+            "description": "Collaboration lease record",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseRecordDto" } } }
+          },
+          "404": { "description": "No status/lease found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/collaboration/volunteer": {
+      "post": {
+        "summary": "Toggle opt-in volunteer execution for a MAS",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VolunteerToggleRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated lease/collaboration state",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseRecordDto" } } }
+          }
+        }
+      }
+    },
+    "/cell/collaboration/batches/claim": {
+      "post": {
+        "summary": "Atomically claim a Distributed work batch",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClaimWorkBatchRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Claimed batch record",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkBatchClaimDto" } } }
+          }
+        }
+      }
+    },
+    "/cell/collaboration/batches/{batchId}/commit": {
+      "parameters": [
+        { "name": "batchId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Commit staged work batch validated by fencingToken",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommitWorkBatchRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Committed batch",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WorkBatchClaimDto" } } }
+          },
+          "409": {
+            "description": "Stale fencing token conflict",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseConflictDto" } } }
+          }
+        }
+      }
+    },
+    "/cell/collaboration/conflicts": {
+      "get": {
+        "summary": "List pending lease/batch conflicts requiring resolution",
+        "parameters": [
+          { "name": "masId", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending conflicts",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ConflictsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/collaboration/conflicts/{conflictId}/resolve": {
+      "parameters": [
+        { "name": "conflictId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Resolve a lease/batch conflict with user-selected policy",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResolveConflictRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Post-resolution lease record",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LeaseRecordDto" } } }
+          }
+        }
+      }
+    },
+    "/cell/registry/discover": {
+      "get": {
+        "summary": "Discover endpoints registered for serviceName",
+        "parameters": [
+          { "name": "serviceName", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discovered endpoints",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscoverEndpointsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/registry/services": {
+      "get": {
+        "summary": "List all registered services",
+        "responses": {
+          "200": {
+            "description": "Service endpoint list",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscoverEndpointsResponse" } } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a service endpoint",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServiceEndpoint" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Registered",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServiceEndpoint" } } }
+          }
+        }
+      }
+    },
+    "/cell/registry/services/{serviceName}": {
+      "parameters": [
+        { "name": "serviceName", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get registered endpoints for serviceName",
+        "responses": {
+          "200": {
+            "description": "Service endpoints",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DiscoverEndpointsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/service-port": {
+      "post": {
+        "summary": "Register local MAS listener port and methods with bridge",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServicePortRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration confirmation",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ServicePortResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/read": {
+      "get": {
+        "summary": "Read complete object bytes at storage path",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Raw bytes",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/storage/range": {
+      "get": {
+        "summary": "Read byte range from storage path",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "offset", "in": "query", "required": true, "schema": { "type": "integer", "minimum": 0 } },
+          { "name": "count", "in": "query", "required": true, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Raw slice bytes",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/exists": {
+      "get": {
+        "summary": "Check existence of storage path",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Existence response",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ExistsResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/metadata": {
+      "get": {
+        "summary": "Get storage object metadata",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StorageMetadataResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/write": {
+      "post": {
+        "summary": "Write bytes to storage path (optionally fenced)",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "fencingToken", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+        },
+        "responses": {
+          "204": { "description": "Written" },
+          "403": { "description": "Fencing token rejected", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/cell/storage/append": {
+      "post": {
+        "summary": "Append bytes to storage path (optionally fenced)",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "fencingToken", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1 } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "New byte length",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AppendStorageResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/delete": {
+      "delete": {
+        "summary": "Delete file or directory from storage",
+        "parameters": [
+          { "name": "path", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "recursive", "in": "query", "required": false, "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deletion result",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DeletedResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/storage/list": {
+      "get": {
+        "summary": "List relative paths under storage prefix (AuraSprout extension)",
+        "parameters": [
+          { "name": "prefix", "in": "query", "required": false, "schema": { "type": "string", "default": "" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching relative paths",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StorageListResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/tattle": {
+      "post": {
+        "summary": "Report a peer MAS failure telemetry tattle",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TattleRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Filed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TattleResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/chaos/status": {
+      "get": {
+        "summary": "Get chaos fault injection status",
+        "responses": {
+          "200": {
+            "description": "Chaos state",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChaosStatusResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "IpcTokenHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-AuraGrid-Ipc-Token"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": ["string", "null"] },
+          "path": { "type": ["string", "null"] }
+        }
+      },
+      "HealthStatus": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string" },
+          "nodeId": { "type": ["string", "null"] },
+          "version": { "type": ["string", "null"] }
+        }
+      },
+      "CellConfigMetadata": {
+        "type": "object",
+        "required": ["keyCount", "maxVersion", "lastModified"],
+        "properties": {
+          "keyCount": { "type": "integer", "minimum": 0 },
+          "maxVersion": { "type": "integer", "minimum": 0 },
+          "lastModified": { "type": "string", "format": "date-time" },
+          "lastModifiedByNodeId": { "type": ["string", "null"] },
+          "synchronizedNodeCount": { "type": "integer", "minimum": 0 },
+          "storagePath": { "type": ["string", "null"] }
+        }
+      },
+      "CellConfigAllResponse": {
+        "type": "object",
+        "required": ["config"],
+        "properties": {
+          "config": { "type": "object", "additionalProperties": true },
+          "metadata": { "$ref": "#/components/schemas/CellConfigMetadata" }
+        }
+      },
+      "CellConfigValueRequest": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "value": {}
+        }
+      },
+      "CellConfigValueResponse": {
+        "type": "object",
+        "required": ["value"],
+        "properties": {
+          "key": { "type": ["string", "null"] },
+          "value": {}
+        }
+      },
+      "RemovedResponse": {
+        "type": "object",
+        "required": ["removed"],
+        "properties": {
+          "removed": { "type": "boolean" }
+        }
+      },
+      "CellMember": {
+        "type": "object",
+        "required": ["nodeId", "state", "lastHeartbeat"],
+        "properties": {
+          "nodeId": { "type": "string" },
+          "hostName": { "type": ["string", "null"] },
+          "state": { "type": "string" },
+          "address": { "type": ["string", "null"] },
+          "joinedAt": { "type": ["string", "null"], "format": "date-time" },
+          "lastHeartbeat": { "type": "string", "format": "date-time" },
+          "registeredServices": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          },
+          "metadata": {
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          },
+          "incarnation": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "CellMembersResponse": {
+        "type": "object",
+        "required": ["members"],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CellMember" }
+          }
+        }
+      },
+      "HealthyCountResponse": {
+        "type": "object",
+        "required": ["count"],
+        "properties": {
+          "count": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "CellMembershipMetadata": {
+        "type": "object",
+        "required": ["healthyCount", "totalCount", "lastUpdated", "incarnationNumber"],
+        "properties": {
+          "healthyCount": { "type": "integer", "minimum": 0 },
+          "totalCount": { "type": "integer", "minimum": 0 },
+          "lastUpdated": { "type": "string", "format": "date-time" },
+          "incarnationNumber": { "type": "integer", "minimum": 0 },
+          "protocol": { "type": ["string", "null"] }
+        }
+      },
+      "GovernanceAppRequest": {
+        "type": "object",
+        "required": ["appId"],
+        "properties": {
+          "appId": { "type": "string" },
+          "userId": { "type": ["string", "null"] }
+        }
+      },
+      "GovernanceResourceRequest": {
+        "type": "object",
+        "required": ["resourceId"],
+        "properties": {
+          "resourceId": { "type": "string" },
+          "userId": { "type": ["string", "null"] }
+        }
+      },
+      "GovernanceDecision": {
+        "type": "object",
+        "required": ["isPermitted"],
+        "properties": {
+          "isPermitted": { "type": "boolean" },
+          "denyReason": { "type": ["string", "null"] },
+          "requiresApproval": { "type": "boolean" },
+          "metadata": {
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          },
+          "expiresAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "UserRolesResponse": {
+        "type": "object",
+        "required": ["roles"],
+        "properties": {
+          "roles": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "AuditEntry": {
+        "type": "object",
+        "required": ["timestamp", "action"],
+        "properties": {
+          "id": { "type": ["string", "null"] },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "userId": { "type": ["string", "null"] },
+          "action": { "type": "string" },
+          "resourceId": { "type": ["string", "null"] },
+          "permitted": { "type": "boolean" },
+          "source": { "type": ["string", "null"] }
+        }
+      },
+      "TopicsResponse": {
+        "type": "object",
+        "required": ["topics"],
+        "properties": {
+          "topics": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ExistsResponse": {
+        "type": "object",
+        "required": ["exists"],
+        "properties": {
+          "exists": { "type": "boolean" }
+        }
+      },
+      "WalMarker": {
+        "type": "object",
+        "required": ["topicId", "sequenceNumber"],
+        "properties": {
+          "topicId": { "type": "string" },
+          "sequenceNumber": { "type": ["integer", "null"], "minimum": 0 },
+          "consumerId": { "type": ["string", "null"] },
+          "updatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+          "customState": { "type": ["string", "null"] }
+        }
+      },
+      "SetMarkerRequest": {
+        "type": "object",
+        "required": ["sequenceNumber"],
+        "properties": {
+          "sequenceNumber": { "type": "integer", "minimum": 0 },
+          "customState": { "type": ["string", "null"] }
+        }
+      },
+      "PublishEventRequest": {
+        "type": "object",
+        "required": ["payload"],
+        "properties": {
+          "payload": { "type": "string", "description": "Base64-encoded payload bytes" },
+          "eventType": { "type": ["string", "null"] }
+        }
+      },
+      "AuraEventDto": {
+        "type": "object",
+        "required": ["eventId", "topicId", "sequenceNumber", "timestamp", "sourceNodeId", "payload"],
+        "properties": {
+          "eventId": { "type": "string" },
+          "topicId": { "type": "string" },
+          "sequenceNumber": { "type": "integer", "minimum": 1 },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "sourceNodeId": { "type": "string" },
+          "eventType": { "type": ["string", "null"] },
+          "payload": { "type": "string" }
+        }
+      },
+      "ConsumeEventsResponse": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AuraEventDto" }
+          }
+        }
+      },
+      "ResourceBid": {
+        "type": "object",
+        "properties": {
+          "nodeId": { "type": ["string", "null"] },
+          "score": { "type": "number" },
+          "metadata": {
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "LeaseAcquireRequest": {
+        "type": "object",
+        "required": ["masId", "bid"],
+        "properties": {
+          "masId": { "type": "string" },
+          "bid": { "$ref": "#/components/schemas/ResourceBid" }
+        }
+      },
+      "LeaseInfo": {
+        "type": "object",
+        "required": ["masId", "holderNodeId", "fencingToken", "acquiredAt", "expiresAt"],
+        "properties": {
+          "masId": { "type": "string" },
+          "holderNodeId": { "type": "string" },
+          "fencingToken": { "type": "integer", "minimum": 1 },
+          "acquiredAt": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "lastKnownMarker": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/WalMarker" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "LeaseRecordDto": {
+        "allOf": [
+          { "$ref": "#/components/schemas/LeaseInfo" },
+          {
+            "type": "object",
+            "required": ["mode", "holderUser", "holderHostName", "volunteerEnabled", "state"],
+            "properties": {
+              "mode": { "type": "string", "enum": ["LocalOnly", "CellSingleton", "Distributed"] },
+              "holderUser": { "type": "string" },
+              "holderHostName": { "type": "string" },
+              "pid": { "type": ["integer", "null"] },
+              "volunteerEnabled": { "type": "boolean" },
+              "activitySummary": { "type": ["string", "null"] },
+              "progressPct": { "type": ["number", "null"], "minimum": 0.0, "maximum": 100.0 },
+              "lastCheckpointUtc": { "type": ["string", "null"], "format": "date-time" },
+              "state": {
+                "type": "string",
+                "enum": ["Active", "Standby", "Released", "ConflictPending", "Stale"]
+              }
+            }
+          }
+        ]
+      },
+      "LeaseAcquisitionResult": {
+        "type": "object",
+        "required": ["acquired"],
+        "properties": {
+          "acquired": { "type": "boolean" },
+          "lease": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/LeaseRecordDto" },
+              { "$ref": "#/components/schemas/LeaseInfo" },
+              { "type": "null" }
+            ]
+          },
+          "reason": { "type": ["string", "null"] }
+        }
+      },
+      "LeaseRenewRequest": {
+        "type": "object",
+        "required": ["masId", "fencingToken"],
+        "properties": {
+          "masId": { "type": "string" },
+          "fencingToken": { "type": "integer", "minimum": 1 },
+          "marker": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/WalMarker" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "LeaseConflictDto": {
+        "type": "object",
+        "required": [
+          "conflictId",
+          "masId",
+          "localNodeId",
+          "localFencingToken",
+          "remoteHolderNodeId",
+          "remoteHolderUser",
+          "remoteFencingToken",
+          "uncommittedItemCount",
+          "detectedAtUtc",
+          "availableResolutions"
+        ],
+        "properties": {
+          "conflictId": { "type": "string" },
+          "masId": { "type": "string" },
+          "localNodeId": { "type": "string" },
+          "localFencingToken": { "type": "integer" },
+          "remoteHolderNodeId": { "type": "string" },
+          "remoteHolderUser": { "type": "string" },
+          "remoteFencingToken": { "type": "integer" },
+          "uncommittedItemCount": { "type": "integer" },
+          "detectedAtUtc": { "type": "string", "format": "date-time" },
+          "availableResolutions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["DiscardLocalAndSync", "KeepLocalAndStageMerge", "TakeOverStaleLock", "YieldToPeer"]
+            }
+          }
+        }
+      },
+      "LeaseRenewResponse": {
+        "type": "object",
+        "required": ["extended"],
+        "properties": {
+          "extended": { "type": "boolean" },
+          "conflict": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/LeaseConflictDto" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "LeaseReleaseRequest": {
+        "type": "object",
+        "required": ["masId", "fencingToken"],
+        "properties": {
+          "masId": { "type": "string" },
+          "fencingToken": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "LeaseMarkerResponse": {
+        "type": "object",
+        "required": ["marker"],
+        "properties": {
+          "marker": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/WalMarker" },
+              { "type": "null" }
+            ]
+          }
+        }
+      },
+      "VolunteerToggleRequest": {
+        "type": "object",
+        "required": ["masId", "enabled"],
+        "properties": {
+          "masId": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "user": { "type": ["string", "null"] }
+        }
+      },
+      "ClaimWorkBatchRequest": {
+        "type": "object",
+        "required": ["masId", "itemIds"],
+        "properties": {
+          "masId": { "type": "string" },
+          "itemIds": { "type": "array", "items": { "type": "string" } },
+          "ttlSeconds": { "type": "number", "default": 60.0 }
+        }
+      },
+      "CommitWorkBatchRequest": {
+        "type": "object",
+        "required": ["fencingToken"],
+        "properties": {
+          "fencingToken": { "type": "integer", "minimum": 1 },
+          "checkpointMetadata": {
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "WorkBatchClaimDto": {
+        "type": "object",
+        "required": [
+          "batchId",
+          "masId",
+          "claimedByNodeId",
+          "claimedByUser",
+          "claimedAtUtc",
+          "expiresAtUtc",
+          "itemIds",
+          "status"
+        ],
+        "properties": {
+          "batchId": { "type": "string" },
+          "masId": { "type": "string" },
+          "claimedByNodeId": { "type": "string" },
+          "claimedByUser": { "type": "string" },
+          "claimedAtUtc": { "type": "string", "format": "date-time" },
+          "expiresAtUtc": { "type": "string", "format": "date-time" },
+          "itemIds": { "type": "array", "items": { "type": "string" } },
+          "status": {
+            "type": "string",
+            "enum": ["Claimed", "Staged", "Committed", "Abandoned"]
+          },
+          "fencingToken": { "type": ["integer", "null"] },
+          "checkpointMetadata": {
+            "type": ["object", "null"],
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "ConflictsResponse": {
+        "type": "object",
+        "required": ["conflicts"],
+        "properties": {
+          "conflicts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LeaseConflictDto" }
+          }
+        }
+      },
+      "ResolveConflictRequest": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["DiscardLocalAndSync", "KeepLocalAndStageMerge", "TakeOverStaleLock", "YieldToPeer"]
+          }
+        }
+      },
+      "ServiceEndpoint": {
+        "type": "object",
+        "required": ["serviceId", "serviceName", "nodeId"],
+        "properties": {
+          "serviceId": { "type": "string" },
+          "serviceName": { "type": "string" },
+          "nodeId": { "type": "string" },
+          "endpointUrl": { "type": ["string", "null"] },
+          "grpcEndpoint": { "type": ["string", "null"] },
+          "openApiEndpoint": { "type": ["string", "null"] },
+          "mcpEndpoint": { "type": ["string", "null"] },
+          "capabilities": { "type": "array", "items": { "type": "string" } },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "DiscoverEndpointsResponse": {
+        "type": "object",
+        "required": ["endpoints"],
+        "properties": {
+          "endpoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ServiceEndpoint" }
+          }
+        }
+      },
+      "ServicePortRequest": {
+        "type": "object",
+        "required": ["serviceName", "port"],
+        "properties": {
+          "serviceName": { "type": "string" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "grpcPort": { "type": ["integer", "null"], "minimum": 1, "maximum": 65535 },
+          "scheme": { "type": "string", "default": "http" },
+          "ipcToken": { "type": ["string", "null"] },
+          "methods": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ServicePortResponse": {
+        "type": "object",
+        "required": ["registered", "serviceName", "port"],
+        "properties": {
+          "registered": { "type": "boolean" },
+          "serviceName": { "type": "string" },
+          "port": { "type": "integer" }
+        }
+      },
+      "StorageMetadataResponse": {
+        "type": "object",
+        "required": ["isDirectory", "size", "lastModified"],
+        "properties": {
+          "isDirectory": { "type": "boolean" },
+          "size": { "type": "integer", "minimum": 0 },
+          "lastModified": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AppendStorageResponse": {
+        "type": "object",
+        "required": ["length"],
+        "properties": {
+          "length": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "DeletedResponse": {
+        "type": "object",
+        "required": ["deleted"],
+        "properties": {
+          "deleted": { "type": "boolean" }
+        }
+      },
+      "StorageListResponse": {
+        "type": "object",
+        "required": ["files"],
+        "properties": {
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "TattleRequest": {
+        "type": "object",
+        "required": ["masId"],
+        "properties": {
+          "masId": { "type": "string" },
+          "detail": { "type": ["string", "null"] }
+        }
+      },
+      "TattleResponse": {
+        "type": "object",
+        "required": ["filed"],
+        "properties": {
+          "filed": { "type": "boolean" }
+        }
+      },
+      "ChaosStatusResponse": {
+        "type": "object",
+        "required": ["gossipSuspended", "storageFaultEnabled"],
+        "properties": {
+          "gossipSuspended": { "type": "boolean" },
+          "storageFaultEnabled": { "type": "boolean" },
+          "faultedNodes": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

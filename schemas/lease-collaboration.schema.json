@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://auragrid.io/schemas/lease-collaboration.schema.json",
+  "title": "AuraGrid & AuraSprout Lease, Work-Batch Claim & Conflict Contracts",
+  "description": "Canonical JSON Schema for WalMarker, LeaseInfo, LeaseRecordDto, LeaseAcquisitionResult, WorkBatchClaimDto, and LeaseConflictDto.",
+  "type": "object",
+  "definitions": {
+    "masMode": {
+      "type": "string",
+      "enum": ["LocalOnly", "CellSingleton", "Distributed"]
+    },
+    "walMarker": {
+      "type": "object",
+      "required": ["topicId", "sequenceNumber"],
+      "additionalProperties": false,
+      "properties": {
+        "topicId": { "type": "string", "minLength": 1 },
+        "sequenceNumber": { "type": ["integer", "null"], "minimum": 0 },
+        "consumerId": { "type": ["string", "null"] },
+        "updatedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+        "customState": {
+          "type": ["string", "null"],
+          "description": "Optional base64-encoded opaque state matching C# WalMarker.CustomState."
+        }
+      }
+    },
+    "leaseInfoBase": {
+      "type": "object",
+      "required": ["masId", "holderNodeId", "fencingToken", "acquiredAt", "expiresAt"],
+      "properties": {
+        "masId": { "type": "string", "minLength": 1 },
+        "holderNodeId": { "type": "string", "minLength": 1 },
+        "fencingToken": { "type": "integer", "minimum": 1 },
+        "acquiredAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "lastKnownMarker": {
+          "oneOf": [
+            { "$ref": "#/definitions/walMarker" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "leaseInfo": {
+      "type": "object",
+      "required": ["masId", "holderNodeId", "fencingToken", "acquiredAt", "expiresAt"],
+      "additionalProperties": false,
+      "properties": {
+        "masId": { "type": "string", "minLength": 1 },
+        "holderNodeId": { "type": "string", "minLength": 1 },
+        "fencingToken": { "type": "integer", "minimum": 1 },
+        "acquiredAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "lastKnownMarker": {
+          "oneOf": [
+            { "$ref": "#/definitions/walMarker" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "leaseRecordExtension": {
+      "type": "object",
+      "required": ["mode", "holderUser", "holderHostName", "volunteerEnabled", "state"],
+      "properties": {
+        "mode": { "$ref": "#/definitions/masMode" },
+        "holderUser": { "type": "string" },
+        "holderHostName": { "type": "string" },
+        "pid": { "type": ["integer", "null"], "minimum": 1 },
+        "volunteerEnabled": { "type": "boolean" },
+        "activitySummary": { "type": ["string", "null"] },
+        "progressPct": { "type": ["number", "null"], "minimum": 0.0, "maximum": 100.0 },
+        "lastCheckpointUtc": { "type": ["string", "null"], "format": "date-time" },
+        "state": {
+          "type": "string",
+          "enum": ["Active", "Standby", "Released", "ConflictPending", "Stale"]
+        }
+      }
+    },
+    "leaseRecordDto": {
+      "description": "Extended LeaseInfo carrying user-space volunteer and progress tracking state.",
+      "allOf": [
+        { "$ref": "#/definitions/leaseInfoBase" },
+        { "$ref": "#/definitions/leaseRecordExtension" }
+      ]
+    },
+    "leaseAcquisitionResult": {
+      "type": "object",
+      "required": ["acquired"],
+      "additionalProperties": false,
+      "properties": {
+        "acquired": { "type": "boolean" },
+        "lease": {
+          "oneOf": [
+            { "$ref": "#/definitions/leaseRecordDto" },
+            { "$ref": "#/definitions/leaseInfo" },
+            { "type": "null" }
+          ]
+        },
+        "reason": { "type": ["string", "null"] }
+      }
+    },
+    "workBatchClaimDto": {
+      "type": "object",
+      "required": [
+        "batchId",
+        "masId",
+        "claimedByNodeId",
+        "claimedByUser",
+        "claimedAtUtc",
+        "expiresAtUtc",
+        "itemIds",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "batchId": { "type": "string", "minLength": 1 },
+        "masId": { "type": "string", "minLength": 1 },
+        "claimedByNodeId": { "type": "string", "minLength": 1 },
+        "claimedByUser": { "type": "string", "minLength": 1 },
+        "claimedAtUtc": { "type": "string", "format": "date-time" },
+        "expiresAtUtc": { "type": "string", "format": "date-time" },
+        "itemIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Claimed", "Staged", "Committed", "Abandoned"]
+        },
+        "fencingToken": { "type": ["integer", "null"], "minimum": 1 },
+        "checkpointMetadata": {
+          "type": ["object", "null"],
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "conflictResolutionAction": {
+      "type": "string",
+      "enum": [
+        "DiscardLocalAndSync",
+        "KeepLocalAndStageMerge",
+        "TakeOverStaleLock",
+        "YieldToPeer"
+      ]
+    },
+    "leaseConflictDto": {
+      "type": "object",
+      "required": [
+        "conflictId",
+        "masId",
+        "localNodeId",
+        "localFencingToken",
+        "remoteHolderNodeId",
+        "remoteHolderUser",
+        "remoteFencingToken",
+        "uncommittedItemCount",
+        "detectedAtUtc",
+        "availableResolutions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "conflictId": { "type": "string", "minLength": 1 },
+        "masId": { "type": "string", "minLength": 1 },
+        "localNodeId": { "type": "string", "minLength": 1 },
+        "localFencingToken": { "type": "integer", "minimum": 0 },
+        "remoteHolderNodeId": { "type": "string", "minLength": 1 },
+        "remoteHolderUser": { "type": "string", "minLength": 1 },
+        "remoteFencingToken": { "type": "integer", "minimum": 1 },
+        "uncommittedItemCount": { "type": "integer", "minimum": 0 },
+        "detectedAtUtc": { "type": "string", "format": "date-time" },
+        "availableResolutions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/conflictResolutionAction" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "serviceName": "EmbeddingService",
+  "description": "Computes vector embeddings for document chunks.",
+  "sourceTypeName": "auracode.services.embedding.EmbeddingService",
+  "methods": [
+    {
+      "methodName": "EmbedText",
+      "description": "Embed a single input string.",
+      "parameters": [
+        {
+          "name": "text",
+          "type": {
+            "clrTypeName": "System.String",
+            "protoType": "string",
+            "openApiType": "string",
+            "openApiFormat": null,
+            "isCollection": false,
+            "elementType": null,
+            "isVoid": false
+          },
+          "isOptional": false
+        },
+        {
+          "name": "dimensions",
+          "type": {
+            "clrTypeName": "System.Int32",
+            "protoType": "int32",
+            "openApiType": "integer",
+            "openApiFormat": "int32",
+            "isCollection": false,
+            "elementType": null,
+            "isVoid": false
+          },
+          "isOptional": true
+        }
+      ],
+      "returnType": {
+        "clrTypeName": "System.Double[]",
+        "protoType": "repeated double",
+        "openApiType": "array",
+        "openApiFormat": null,
+        "isCollection": true,
+        "elementType": {
+          "clrTypeName": "System.Double",
+          "protoType": "double",
+          "openApiType": "number",
+          "openApiFormat": "double",
+          "isCollection": false,
+          "elementType": null,
+          "isVoid": false
+        },
+        "isVoid": false
+      },
+      "requiredRole": "Worker",
+      "requiredClaim": null
+    }
+  ]
+}

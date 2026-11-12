@@ -1,0 +1,74 @@
+{
+  "$schema": "https://auragrid.io/schemas/app.manifest.schema.json",
+  "appId": "aurarouter-sample",
+  "name": "AuraRouter Inference Stack",
+  "version": "1.2.0",
+  "description": "Sample multi-mode AuraCore application demonstrating LocalOnly, CellSingleton, and Distributed MAS placements.",
+  "services": [
+    {
+      "masId": "local-telemetry",
+      "displayName": "Local Telemetry Collector",
+      "mode": "LocalOnly",
+      "runtime": "Python",
+      "restartPolicy": "Always",
+      "maxRestartAttempts": 5,
+      "pythonConfig": {
+        "scriptPath": "services/telemetry.py",
+        "pythonExecutable": "python",
+        "managedVenv": "aurarouter-env"
+      }
+    },
+    {
+      "masId": "model-coordinator",
+      "displayName": "Model Registry Coordinator",
+      "mode": "CellSingleton",
+      "runtime": "Python",
+      "restartPolicy": "OnFailure",
+      "metadataRequirements": {
+        "gpu.vram.gb": ">=24",
+        "cpu.avx2": "true"
+      },
+      "remoting": {
+        "enableGrpc": true,
+        "enableOpenApi": true,
+        "enableMcp": true
+      },
+      "pythonConfig": {
+        "scriptPath": "services/coordinator.py",
+        "managedVenv": "aurarouter-env"
+      }
+    },
+    {
+      "masId": "batch-worker",
+      "displayName": "Distributed Embedding Worker",
+      "mode": "Distributed",
+      "runtime": "Python",
+      "pythonConfig": {
+        "scriptPath": "services/worker.py",
+        "managedVenv": "aurarouter-env"
+      }
+    }
+  ],
+  "guiEntryPoints": [
+    {
+      "name": "AuraRouter Studio",
+      "description": "Interactive desktop console",
+      "iconPath": "assets/icon.png",
+      "context": "Python",
+      "entryCommand": "python -m aurarouter.ui"
+    }
+  ],
+  "distribution": {
+    "channels": ["stable", "preview"],
+    "wheelhousePath": "wheels/",
+    "subprojects": ["core", "ui"],
+    "pipInstallArgs": ["--no-index", "--find-links", "wheels"],
+    "hooks": {
+      "postInstall": "hooks/post_install.py"
+    },
+    "defaultPort": 8190,
+    "createDesktopShortcut": true,
+    "createLaunchers": true,
+    "tags": ["ai", "inference"]
+  }
+}

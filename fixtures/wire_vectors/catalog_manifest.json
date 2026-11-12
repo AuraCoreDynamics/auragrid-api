@@ -1,0 +1,48 @@
+{
+  "catalogName": "AuraCore Community Catalog",
+  "description": "Unified AuraSprout and AuraGrid application catalog",
+  "version": "1.0.0",
+  "baseUrl": "http://127.0.0.1:7099",
+  "updatedAt": "2026-11-12T10:00:00Z",
+  "attachedSources": [
+    {
+      "url": "http://127.0.0.1:7099",
+      "label": "Local AuraSprout Catalog",
+      "isDefault": true
+    }
+  ],
+  "apps": {
+    "aurarouter-sample": {
+      "appId": "aurarouter-sample",
+      "name": "aurarouter-sample",
+      "displayName": "AuraRouter Inference Stack",
+      "description": "Local and collaborative router stack.",
+      "latestVersion": "1.2.0",
+      "channel": "stable",
+      "manifestUri": "packages/aurarouter-sample-1.2.0.apkg",
+      "isDefault": false,
+      "tags": ["ai", "inference"],
+      "createdAt": "2026-11-10T08:00:00Z",
+      "updatedAt": "2026-11-12T10:00:00Z",
+      "versions": {
+        "1.2.0": {
+          "version": "1.2.0",
+          "channel": "stable",
+          "releaseDate": "2026-11-12T10:00:00Z",
+          "bundleFilename": "aurarouter-sample-1.2.0.apkg",
+          "bundleUrl": "packages/aurarouter-sample-1.2.0.apkg",
+          "bundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bundleSizeBytes": 4096,
+          "manifestSha256": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+          "entrypointCommand": "python -m aurarouter.ui",
+          "defaultPort": 8190,
+          "wheelhousePath": "wheels/",
+          "deltaFromVersion": "1.1.0",
+          "subprojects": ["core", "ui"],
+          "artifacts": ["README.md"],
+          "changelog": "Unified MasMode release."
+        }
+      }
+    }
+  }
+}
