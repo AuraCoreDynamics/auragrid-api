@@ -735,6 +735,50 @@
           }
         }
       }
+    },
+    "/cell/chaos/gossip": {
+      "post": {
+        "summary": "Suspend or resume SWIM gossip heartbeats for chaos testing",
+        "parameters": [
+          { "name": "suspended", "in": "query", "required": true, "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gossip fault toggle updated",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChaosToggleResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/chaos/network": {
+      "post": {
+        "summary": "Configure simulated network faults for chaos testing",
+        "parameters": [
+          { "name": "nodeId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "statusCode", "in": "query", "required": false, "schema": { "type": "integer" } },
+          { "name": "latencyMs", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Network fault updated",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChaosToggleResponse" } } }
+          }
+        }
+      }
+    },
+    "/cell/chaos/storage": {
+      "post": {
+        "summary": "Enable or disable shared storage faults for chaos testing",
+        "parameters": [
+          { "name": "enabled", "in": "query", "required": true, "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Storage fault toggle updated",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChaosToggleResponse" } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1307,6 +1351,18 @@
             "type": "array",
             "items": { "type": "string" }
           }
+        }
+      },
+      "ChaosToggleResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "suspended": { "type": ["boolean", "null"] },
+          "enabled": { "type": ["boolean", "null"] },
+          "nodeId": { "type": ["string", "null"] },
+          "statusCode": { "type": ["integer", "null"] },
+          "latencyMs": { "type": ["integer", "null"] }
         }
       }
     }
