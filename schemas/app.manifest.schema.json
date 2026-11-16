@@ -30,6 +30,15 @@
       "type": "string",
       "description": "Summary of the application workload and responsibilities."
     },
+    "websiteUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional project or documentation website URL."
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "description": "Optional source code repository URL or git URN (e.g. https://github.com/... or git@...)."
+    },
     "installer": { "$ref": "#/definitions/executableDefinition" },
     "startup": { "$ref": "#/definitions/executableDefinition" },
     "shutdown": { "$ref": "#/definitions/executableDefinition" },
