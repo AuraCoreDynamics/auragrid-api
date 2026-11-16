@@ -237,6 +237,11 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "skills": {
+          "type": "array",
+          "description": "Relative paths to agentic skill directories (containing SKILL.md) or SKILL.md files bundled with this application.",
+          "items": { "type": "string" }
+        },
         "hooks": {
           "type": "object",
           "properties": {
