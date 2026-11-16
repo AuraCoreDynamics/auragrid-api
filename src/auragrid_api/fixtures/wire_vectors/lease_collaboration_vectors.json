@@ -1,0 +1,89 @@
+{
+  "walMarker": {
+    "topicId": "jobs.indexing",
+    "sequenceNumber": 42,
+    "consumerId": "model-coordinator",
+    "updatedAtUtc": "2026-11-12T10:05:00Z",
+    "customState": "Y2hlY2twb2ludC00Mg=="
+  },
+  "leaseInfo": {
+    "masId": "model-coordinator",
+    "holderNodeId": "node-alpha",
+    "fencingToken": 7,
+    "acquiredAt": "2026-11-12T10:00:00Z",
+    "expiresAt": "2026-11-12T10:02:00Z",
+    "lastKnownMarker": {
+      "topicId": "jobs.indexing",
+      "sequenceNumber": 42,
+      "consumerId": "model-coordinator"
+    }
+  },
+  "leaseRecordDto": {
+    "masId": "model-coordinator",
+    "mode": "CellSingleton",
+    "holderNodeId": "node-alpha",
+    "holderUser": "alice",
+    "holderHostName": "workstation-01",
+    "fencingToken": 7,
+    "acquiredAt": "2026-11-12T10:00:00Z",
+    "expiresAt": "2026-11-12T10:02:00Z",
+    "pid": 14820,
+    "volunteerEnabled": true,
+    "activitySummary": "Indexing tile batch 7",
+    "progressPct": 62.500000,
+    "lastCheckpointUtc": "2026-11-12T10:01:30Z",
+    "state": "Active",
+    "lastKnownMarker": {
+      "topicId": "jobs.indexing",
+      "sequenceNumber": 42,
+      "consumerId": "model-coordinator"
+    }
+  },
+  "leaseAcquisitionResult": {
+    "acquired": true,
+    "lease": {
+      "masId": "model-coordinator",
+      "mode": "CellSingleton",
+      "holderNodeId": "node-alpha",
+      "holderUser": "alice",
+      "holderHostName": "workstation-01",
+      "fencingToken": 7,
+      "acquiredAt": "2026-11-12T10:00:00Z",
+      "expiresAt": "2026-11-12T10:02:00Z",
+      "volunteerEnabled": true,
+      "state": "Active"
+    },
+    "reason": null
+  },
+  "workBatchClaimDto": {
+    "batchId": "batch-20261112-001",
+    "masId": "batch-worker",
+    "claimedByNodeId": "node-beta",
+    "claimedByUser": "bob",
+    "claimedAtUtc": "2026-11-12T10:03:00Z",
+    "expiresAtUtc": "2026-11-12T10:04:00Z",
+    "itemIds": ["doc-001", "doc-002", "doc-003"],
+    "status": "Claimed",
+    "fencingToken": 3,
+    "checkpointMetadata": {
+      "stage": "extract"
+    }
+  },
+  "leaseConflictDto": {
+    "conflictId": "conflict-001",
+    "masId": "model-coordinator",
+    "localNodeId": "node-alpha",
+    "localFencingToken": 7,
+    "remoteHolderNodeId": "node-beta",
+    "remoteHolderUser": "bob",
+    "remoteFencingToken": 8,
+    "uncommittedItemCount": 3,
+    "detectedAtUtc": "2026-11-12T10:04:15Z",
+    "availableResolutions": [
+      "DiscardLocalAndSync",
+      "KeepLocalAndStageMerge",
+      "TakeOverStaleLock",
+      "YieldToPeer"
+    ]
+  }
+}

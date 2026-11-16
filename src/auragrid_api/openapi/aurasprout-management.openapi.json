@@ -1,0 +1,530 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AuraSprout Local Management Portal API",
+    "version": "4.3.0",
+    "description": "OpenAPI 3.1 contract for AuraSprout's loopback user-space management server consumed by the Tray app, CLI, and Tier-3 browser Web UI."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:0",
+      "description": "Localhost Tier-3 loopback management HTTP server"
+    }
+  ],
+  "security": [
+    { "SessionCookie": [], "CsrfHeader": [] }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Liveness check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy management server",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagementHealthResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Versioned health check",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy management server",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagementHealthResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/session": {
+      "post": {
+        "summary": "Exchange ephemeral #fragment token for HttpOnly SameSite=Strict session cookie and CSRF token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionExchangeRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Session initialized",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SessionExchangeResponse" } } }
+          },
+          "401": { "description": "Invalid token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+        }
+      }
+    },
+    "/api/v1/apps": {
+      "get": {
+        "summary": "List locally installed applications and their services",
+        "responses": {
+          "200": {
+            "description": "Installed application list",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InstalledAppsResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/apps/install": {
+      "post": {
+        "summary": "Install an application from a local package path or catalog entry",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InstallAppRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Installed application metadata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InstalledAppSummary" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/apps/{appId}": {
+      "parameters": [
+        { "name": "appId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "summary": "Get details of an installed application",
+        "responses": {
+          "200": {
+            "description": "Installed application summary",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InstalledAppSummary" } } }
+          },
+          "404": { "description": "App not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+        }
+      },
+      "delete": {
+        "summary": "Uninstall an application",
+        "responses": {
+          "200": {
+            "description": "Uninstalled",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UninstallAppResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/apps/{appId}/launch": {
+      "parameters": [
+        { "name": "appId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Launch GUI entrypoint or LocalOnly service for appId",
+        "requestBody": {
+          "required": false,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LaunchAppRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Launch confirmation",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LaunchAppResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog": {
+      "get": {
+        "summary": "Query unified application catalog entries across attached sources",
+        "parameters": [
+          { "name": "q", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "channel", "in": "query", "required": false, "schema": { "type": "string", "enum": ["stable", "preview", "canary", "nightly"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog query results",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogQueryResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/sources": {
+      "get": {
+        "summary": "List attached catalog sources",
+        "responses": {
+          "200": {
+            "description": "Attached catalog sources",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogSourcesResponse" } } }
+          }
+        }
+      },
+      "post": {
+        "summary": "Attach or update a catalog source",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogSourceItem" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved source",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogSourceItem" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/publish": {
+      "post": {
+        "summary": "Publish a packaged .apkg bundle with SHA-256 verification",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PublishPackageRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Published package entry",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CatalogEntrySummary" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/volunteer": {
+      "get": {
+        "summary": "List opt-in volunteer statuses for all supervised MAS services",
+        "responses": {
+          "200": {
+            "description": "Volunteer status list",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VolunteerListResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/volunteer/{masId}": {
+      "parameters": [
+        { "name": "masId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Enable or disable collaborative volunteering for masId",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SetVolunteerStateRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated volunteer lease state",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VolunteerStateItem" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/conflicts": {
+      "get": {
+        "summary": "List pending lease/batch conflicts for interactive resolution",
+        "responses": {
+          "200": {
+            "description": "Pending conflicts",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagementConflictsResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/conflicts/{conflictId}/resolve": {
+      "parameters": [
+        { "name": "conflictId", "in": "path", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "summary": "Resolve a pending lease/batch conflict",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResolveManagementConflictRequest" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated volunteer state post resolution",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VolunteerStateItem" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/runtimes": {
+      "get": {
+        "summary": "List discovered Python runtimes and sovereign mvenvs via AuraSeed",
+        "responses": {
+          "200": {
+            "description": "Discovered runtimes and mvenvs",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RuntimesResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "aurasprout_session"
+      },
+      "CsrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": ["string", "null"] }
+        }
+      },
+      "ManagementHealthResponse": {
+        "type": "object",
+        "required": ["status", "version", "nodeId"],
+        "properties": {
+          "status": { "type": "string" },
+          "version": { "type": "string" },
+          "nodeId": { "type": "string" }
+        }
+      },
+      "SessionExchangeRequest": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": { "type": "string", "minLength": 1 }
+        }
+      },
+      "SessionExchangeResponse": {
+        "type": "object",
+        "required": ["authenticated", "csrfToken"],
+        "properties": {
+          "authenticated": { "type": "boolean" },
+          "csrfToken": { "type": "string" }
+        }
+      },
+      "InstalledServiceSummary": {
+        "type": "object",
+        "required": ["masId", "mode", "runtime", "volunteerEnabled", "state"],
+        "properties": {
+          "masId": { "type": "string" },
+          "displayName": { "type": ["string", "null"] },
+          "mode": { "type": "string", "enum": ["LocalOnly", "CellSingleton", "Distributed"] },
+          "runtime": { "type": "string" },
+          "volunteerEnabled": { "type": "boolean" },
+          "state": { "type": "string" }
+        }
+      },
+      "InstalledAppSummary": {
+        "type": "object",
+        "required": ["appId", "name", "version", "installPath", "services"],
+        "properties": {
+          "appId": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "installPath": { "type": "string" },
+          "mvenvName": { "type": ["string", "null"] },
+          "channel": { "type": "string" },
+          "services": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InstalledServiceSummary" }
+          }
+        }
+      },
+      "InstalledAppsResponse": {
+        "type": "object",
+        "required": ["apps"],
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InstalledAppSummary" }
+          }
+        }
+      },
+      "InstallAppRequest": {
+        "type": "object",
+        "properties": {
+          "packagePath": { "type": ["string", "null"] },
+          "appId": { "type": ["string", "null"] },
+          "version": { "type": ["string", "null"] },
+          "channel": { "type": "string", "default": "stable" },
+          "destDir": { "type": ["string", "null"] }
+        }
+      },
+      "UninstallAppResponse": {
+        "type": "object",
+        "required": ["appId", "uninstalled"],
+        "properties": {
+          "appId": { "type": "string" },
+          "uninstalled": { "type": "boolean" }
+        }
+      },
+      "LaunchAppRequest": {
+        "type": "object",
+        "properties": {
+          "entrypointName": { "type": ["string", "null"] }
+        }
+      },
+      "LaunchAppResponse": {
+        "type": "object",
+        "required": ["appId", "launched", "pid"],
+        "properties": {
+          "appId": { "type": "string" },
+          "launched": { "type": "boolean" },
+          "pid": { "type": ["integer", "null"] }
+        }
+      },
+      "CatalogEntrySummary": {
+        "type": "object",
+        "required": ["appId", "name", "displayName", "latestVersion", "channel"],
+        "properties": {
+          "appId": { "type": "string" },
+          "name": { "type": "string" },
+          "displayName": { "type": "string" },
+          "description": { "type": "string" },
+          "latestVersion": { "type": "string" },
+          "channel": { "type": "string", "enum": ["stable", "preview", "canary", "nightly"] },
+          "bundleSha256": { "type": ["string", "null"] },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "CatalogQueryResponse": {
+        "type": "object",
+        "required": ["apps"],
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogEntrySummary" }
+          }
+        }
+      },
+      "CatalogSourceItem": {
+        "type": "object",
+        "required": ["url", "label", "isDefault"],
+        "properties": {
+          "url": { "type": "string" },
+          "label": { "type": "string" },
+          "isDefault": { "type": "boolean" }
+        }
+      },
+      "CatalogSourcesResponse": {
+        "type": "object",
+        "required": ["sources"],
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CatalogSourceItem" }
+          }
+        }
+      },
+      "PublishPackageRequest": {
+        "type": "object",
+        "required": ["packagePath"],
+        "properties": {
+          "packagePath": { "type": "string" },
+          "channel": { "type": "string", "default": "stable" }
+        }
+      },
+      "SetVolunteerStateRequest": {
+        "type": "object",
+        "required": ["enabled"],
+        "properties": {
+          "enabled": { "type": "boolean" }
+        }
+      },
+      "VolunteerStateItem": {
+        "type": "object",
+        "required": ["masId", "mode", "volunteerEnabled", "state"],
+        "properties": {
+          "masId": { "type": "string" },
+          "mode": { "type": "string", "enum": ["LocalOnly", "CellSingleton", "Distributed"] },
+          "volunteerEnabled": { "type": "boolean" },
+          "state": { "type": "string" },
+          "holderNodeId": { "type": ["string", "null"] },
+          "holderUser": { "type": ["string", "null"] },
+          "fencingToken": { "type": ["integer", "null"] },
+          "activitySummary": { "type": ["string", "null"] },
+          "progressPct": { "type": ["number", "null"] }
+        }
+      },
+      "VolunteerListResponse": {
+        "type": "object",
+        "required": ["services"],
+        "properties": {
+          "services": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/VolunteerStateItem" }
+          }
+        }
+      },
+      "ConflictItem": {
+        "type": "object",
+        "required": [
+          "conflictId",
+          "masId",
+          "localNodeId",
+          "localFencingToken",
+          "remoteHolderNodeId",
+          "remoteHolderUser",
+          "remoteFencingToken",
+          "uncommittedItemCount",
+          "detectedAtUtc",
+          "availableResolutions"
+        ],
+        "properties": {
+          "conflictId": { "type": "string" },
+          "masId": { "type": "string" },
+          "localNodeId": { "type": "string" },
+          "localFencingToken": { "type": "integer" },
+          "remoteHolderNodeId": { "type": "string" },
+          "remoteHolderUser": { "type": "string" },
+          "remoteFencingToken": { "type": "integer" },
+          "uncommittedItemCount": { "type": "integer" },
+          "detectedAtUtc": { "type": "string", "format": "date-time" },
+          "availableResolutions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["DiscardLocalAndSync", "KeepLocalAndStageMerge", "TakeOverStaleLock", "YieldToPeer"]
+            }
+          }
+        }
+      },
+      "ManagementConflictsResponse": {
+        "type": "object",
+        "required": ["conflicts"],
+        "properties": {
+          "conflicts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ConflictItem" }
+          }
+        }
+      },
+      "ResolveManagementConflictRequest": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["DiscardLocalAndSync", "KeepLocalAndStageMerge", "TakeOverStaleLock", "YieldToPeer"]
+          }
+        }
+      },
+      "RuntimeItem": {
+        "type": "object",
+        "required": ["name", "pythonExecutable", "version"],
+        "properties": {
+          "name": { "type": "string" },
+          "pythonExecutable": { "type": "string" },
+          "version": { "type": "string" },
+          "isMvenv": { "type": "boolean" },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "RuntimesResponse": {
+        "type": "object",
+        "required": ["runtimes"],
+        "properties": {
+          "runtimes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RuntimeItem" }
+          }
+        }
+      }
+    }
+  }
+}

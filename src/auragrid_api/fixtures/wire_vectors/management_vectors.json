@@ -1,0 +1,119 @@
+{
+  "ManagementHealthResponse": {
+    "status": "Healthy",
+    "version": "4.3.0",
+    "nodeId": "node-alpha"
+  },
+  "SessionExchangeRequest": {
+    "token": "ephemeral-fragment-secret-token"
+  },
+  "SessionExchangeResponse": {
+    "authenticated": true,
+    "csrfToken": "csrf-nonce-001"
+  },
+  "InstalledAppsResponse": {
+    "apps": [
+      {
+        "appId": "aurarouter-sample",
+        "name": "AuraRouter Inference Stack",
+        "version": "1.2.0",
+        "installPath": "C:/Users/alice/AppData/Local/AuraSprout/apps/aurarouter-sample",
+        "mvenvName": "aurarouter-env",
+        "channel": "stable",
+        "services": [
+          {
+            "masId": "local-telemetry",
+            "displayName": "Local Telemetry Collector",
+            "mode": "LocalOnly",
+            "runtime": "Python",
+            "volunteerEnabled": false,
+            "state": "Active"
+          },
+          {
+            "masId": "model-coordinator",
+            "displayName": "Model Registry Coordinator",
+            "mode": "CellSingleton",
+            "runtime": "Python",
+            "volunteerEnabled": false,
+            "state": "Standby"
+          }
+        ]
+      }
+    ]
+  },
+  "CatalogQueryResponse": {
+    "apps": [
+      {
+        "appId": "aurarouter-sample",
+        "name": "aurarouter-sample",
+        "displayName": "AuraRouter Inference Stack",
+        "description": "Local and collaborative router stack.",
+        "latestVersion": "1.2.0",
+        "channel": "stable",
+        "bundleSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tags": [
+          "ai",
+          "inference"
+        ]
+      }
+    ]
+  },
+  "CatalogSourcesResponse": {
+    "sources": [
+      {
+        "url": "http://127.0.0.1:7099",
+        "label": "Local Catalog",
+        "isDefault": true
+      }
+    ]
+  },
+  "VolunteerListResponse": {
+    "services": [
+      {
+        "masId": "model-coordinator",
+        "mode": "CellSingleton",
+        "volunteerEnabled": true,
+        "state": "Active",
+        "holderNodeId": "node-alpha",
+        "holderUser": "alice",
+        "fencingToken": 7,
+        "activitySummary": "Indexing tile batch 7",
+        "progressPct": 62.500000
+      }
+    ]
+  },
+  "ManagementConflictsResponse": {
+    "conflicts": [
+      {
+        "conflictId": "conflict-001",
+        "masId": "model-coordinator",
+        "localNodeId": "node-alpha",
+        "localFencingToken": 7,
+        "remoteHolderNodeId": "node-beta",
+        "remoteHolderUser": "bob",
+        "remoteFencingToken": 8,
+        "uncommittedItemCount": 3,
+        "detectedAtUtc": "2026-11-12T10:04:15Z",
+        "availableResolutions": [
+          "DiscardLocalAndSync",
+          "KeepLocalAndStageMerge",
+          "TakeOverStaleLock",
+          "YieldToPeer"
+        ]
+      }
+    ]
+  },
+  "RuntimesResponse": {
+    "runtimes": [
+      {
+        "name": "aurarouter-env",
+        "pythonExecutable": "C:/Users/alice/AppData/Local/AuraSeed/mvenvs/aurarouter-env/Scripts/python.exe",
+        "version": "3.12.4",
+        "isMvenv": true,
+        "capabilities": {
+          "abi": "cp312"
+        }
+      }
+    ]
+  }
+}

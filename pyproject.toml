@@ -21,5 +21,12 @@ dev = [
 where = ["src"]
 include = ["auragrid_api*"]
 
+[tool.setuptools.package-data]
+auragrid_api = [
+    "schemas/*.json",
+    "openapi/*.json",
+    "fixtures/wire_vectors/*.json",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
