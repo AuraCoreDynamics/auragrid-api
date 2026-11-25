@@ -1,0 +1,252 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://auragrid.io/schemas/ops-telemetry.schema.json",
+  "title": "AuraGrid & AuraSprout DevSecOps Runtime Telemetry Contracts",
+  "description": "Canonical Draft-07 JSON Schema defining identical DevSecOps runtime telemetry wire contracts shared by free AuraSprout and licensed AuraGrid over /cell/events/{topicId}.",
+  "oneOf": [
+    { "$ref": "#/definitions/opsLogError" },
+    { "$ref": "#/definitions/opsCrashReport" },
+    { "$ref": "#/definitions/opsPerfAnomaly" }
+  ],
+  "definitions": {
+    "opsTopic": {
+      "type": "string",
+      "enum": [
+        "ops.logs.error",
+        "ops.lifecycle.crash",
+        "ops.perf.anomaly",
+        "ops.audit.security"
+      ],
+      "description": "Canonical WAL event topics used for DevSecOps runtime telemetry over /cell/events/{topicId}."
+    },
+    "triagePolicy": {
+      "type": "string",
+      "enum": ["SUPERVISED", "BOUNDED_AUTONOMOUS"],
+      "description": "Governance mode controlling human-in-the-loop vs. bounded autonomous incident triage."
+    },
+    "stackFrame": {
+      "type": "object",
+      "required": ["file", "line", "function"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Source file path or module identifier for the stack frame."
+        },
+        "line": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "1-based source line number (0 or null when debug line info is unavailable)."
+        },
+        "function": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Method or function name at the call site."
+        },
+        "symbol": {
+          "type": ["string", "null"],
+          "description": "Optional fully qualified symbol or CLR/Python callable signature."
+        }
+      }
+    },
+    "opsProvenance": {
+      "type": "object",
+      "required": ["appId", "masId", "version", "nodeId", "runtimeTier"],
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "masId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commitSha": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "mvenvDigest": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "nodeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimeTier": {
+          "type": "string",
+          "enum": ["aurasprout", "auragrid"]
+        }
+      }
+    },
+    "opsLogError": {
+      "type": "object",
+      "required": [
+        "topic",
+        "timestamp",
+        "provenance",
+        "logger",
+        "level",
+        "message",
+        "frames",
+        "logTail",
+        "fingerprint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "type": "string",
+          "const": "ops.logs.error"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/definitions/opsProvenance"
+        },
+        "logger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "level": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exceptionType": {
+          "type": ["string", "null"]
+        },
+        "stackTrace": {
+          "type": ["string", "null"]
+        },
+        "frames": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/stackFrame" }
+        },
+        "logTail": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "opsCrashReport": {
+      "type": "object",
+      "required": [
+        "topic",
+        "timestamp",
+        "provenance",
+        "exitCode",
+        "restartCount",
+        "uptimeSeconds",
+        "stderrTail",
+        "fingerprint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "type": "string",
+          "const": "ops.lifecycle.crash"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/definitions/opsProvenance"
+        },
+        "exitCode": {
+          "type": "integer"
+        },
+        "signal": {
+          "type": ["string", "null"]
+        },
+        "restartCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uptimeSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stderrTail": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "opsPerfAnomaly": {
+      "type": "object",
+      "required": [
+        "topic",
+        "timestamp",
+        "provenance",
+        "metric",
+        "observedValue",
+        "sloThreshold",
+        "operation",
+        "fingerprint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "topic": {
+          "type": "string",
+          "const": "ops.perf.anomaly"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/definitions/opsProvenance"
+        },
+        "metric": {
+          "type": "string",
+          "enum": ["latency_ms", "rss_mb", "cpu_pct", "error_rate"]
+        },
+        "observedValue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sloThreshold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "operation": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "opsTelemetryPayload": {
+      "description": "Discriminated union of canonical DevSecOps runtime telemetry payloads published over /cell/events/{topicId}.",
+      "oneOf": [
+        { "$ref": "#/definitions/opsLogError" },
+        { "$ref": "#/definitions/opsCrashReport" },
+        { "$ref": "#/definitions/opsPerfAnomaly" }
+      ]
+    }
+  }
+}

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import jsonschema
+import pytest
 from jsonschema import Draft7Validator, FormatChecker
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -86,15 +87,31 @@ def test_package_contains_zero_runtime_implementation_logic() -> None:
     assert list((SRC_DIR / "auragrid_api").glob("*.py")) == [init_file]
 
 
+def test_repo_and_bundled_contract_directories_synchronized() -> None:
+    """Ensure root contract files and src/auragrid_api bundled copies stay strictly identical."""
+    pkg_dir = SRC_DIR / "auragrid_api"
+    for rel_dir in ("schemas", "openapi", "fixtures/wire_vectors"):
+        repo_subdir = REPO_ROOT / rel_dir
+        pkg_subdir = pkg_dir / rel_dir
+        repo_files = {p.name: p for p in repo_subdir.glob("*.json")}
+        pkg_files = {p.name: p for p in pkg_subdir.glob("*.json")}
+        assert set(repo_files) == set(pkg_files), f"File set mismatch in {rel_dir}"
+        for filename, repo_file in repo_files.items():
+            assert repo_file.read_text(encoding="utf-8") == pkg_files[filename].read_text(
+                encoding="utf-8"
+            ), f"Content drift between {repo_file} and {pkg_files[filename]}"
+
+
 def test_schema_files_valid_and_mode_enum_unified() -> None:
-    """Validate every JSON Schema and confirm MasMode enum lockdown."""
+    """Validate every JSON Schema and confirm MasMode and DevSecOps enum lockdowns."""
     expected = {
         "app.manifest.schema.json",
         "service-descriptor.schema.json",
         "catalog.schema.json",
         "lease-collaboration.schema.json",
+        "ops-telemetry.schema.json",
     }
-    assert expected.issubset(set(auragrid_api.list_schemas()))
+    assert set(auragrid_api.list_schemas()) == expected
 
     for name in expected:
         schema_path = auragrid_api.get_schema_path(name)
@@ -116,6 +133,105 @@ def test_schema_files_valid_and_mode_enum_unified() -> None:
         "CellSingleton",
         "Distributed",
     ]
+
+
+def test_ops_telemetry_schema_definitions_and_vectors() -> None:
+    """Verify canonical ops-telemetry.schema.json definitions and valid/invalid vectors."""
+    ops_schema = auragrid_api.load_schema("ops-telemetry.schema.json")
+    defs = ops_schema["definitions"]
+
+    expected_defs = {
+        "opsTopic",
+        "triagePolicy",
+        "stackFrame",
+        "opsProvenance",
+        "opsLogError",
+        "opsCrashReport",
+        "opsPerfAnomaly",
+        "opsTelemetryPayload",
+    }
+    assert expected_defs.issubset(set(defs))
+    assert defs["opsTopic"]["enum"] == [
+        "ops.logs.error",
+        "ops.lifecycle.crash",
+        "ops.perf.anomaly",
+        "ops.audit.security",
+    ]
+    assert defs["triagePolicy"]["enum"] == ["SUPERVISED", "BOUNDED_AUTONOMOUS"]
+    assert defs["opsProvenance"]["properties"]["runtimeTier"]["enum"] == [
+        "aurasprout",
+        "auragrid",
+    ]
+    assert defs["opsPerfAnomaly"]["properties"]["metric"]["enum"] == [
+        "latency_ms",
+        "rss_mb",
+        "cpu_pct",
+        "error_rate",
+    ]
+
+    ops_vectors = auragrid_api.load_wire_vector("ops_telemetry_vectors.json")
+    root_validator = Draft7Validator(ops_schema, format_checker=FormatChecker())
+
+    for def_name in ("opsLogError", "opsCrashReport", "opsPerfAnomaly"):
+        valid_cases = ops_vectors["valid"][def_name]
+        assert valid_cases, f"Expected valid cases for {def_name}"
+        for payload in valid_cases:
+            _validate_against_definition(ops_schema, def_name, payload)
+            _validate_against_definition(ops_schema, "opsTelemetryPayload", payload)
+            root_validator.validate(payload)
+
+        invalid_cases = ops_vectors["invalid"][def_name]
+        assert invalid_cases, f"Expected invalid cases for {def_name}"
+        for bad_payload in invalid_cases:
+            with pytest.raises(jsonschema.ValidationError):
+                _validate_against_definition(ops_schema, def_name, bad_payload)
+            with pytest.raises(jsonschema.ValidationError):
+                _validate_against_definition(ops_schema, "opsTelemetryPayload", bad_payload)
+            with pytest.raises(jsonschema.ValidationError):
+                root_validator.validate(bad_payload)
+
+
+def test_app_manifest_observability_schema_and_vectors() -> None:
+    """Verify optional top-level observability contract in app.manifest.schema.json."""
+    app_schema = auragrid_api.load_schema("app.manifest.schema.json")
+    assert app_schema["properties"]["observability"] == {"$ref": "#/definitions/observabilityConfig"}
+    assert "observability" not in app_schema["required"]
+
+    obs_def = app_schema["definitions"]["observabilityConfig"]
+    assert obs_def["properties"]["triagePolicy"]["enum"] == ["SUPERVISED", "BOUNDED_AUTONOMOUS"]
+    assert obs_def["properties"]["triagePolicy"]["default"] == "SUPERVISED"
+    assert obs_def["properties"]["logRingLines"] == {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 10000,
+        "default": 200,
+    }
+
+    slo_ref = obs_def["properties"]["slo"]["$ref"]
+    slo_def = _resolve_internal_pointer(app_schema, slo_ref)
+    assert set(slo_def["properties"]) == {
+        "maxStartupMs",
+        "maxEndpointLatencyMs",
+        "maxRssMb",
+        "maxRestartCount",
+    }
+
+    ops_vectors = auragrid_api.load_wire_vector("ops_telemetry_vectors.json")
+    manifest_validator = Draft7Validator(app_schema, format_checker=FormatChecker())
+
+    for valid_obs in ops_vectors["valid"]["observabilityConfig"]:
+        _validate_against_definition(app_schema, "observabilityConfig", valid_obs)
+
+    for valid_manifest in ops_vectors["valid"]["manifestWithObservability"]:
+        manifest_validator.validate(valid_manifest)
+
+    for invalid_obs in ops_vectors["invalid"]["observabilityConfig"]:
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_definition(app_schema, "observabilityConfig", invalid_obs)
+
+    for invalid_manifest in ops_vectors["invalid"]["manifestWithObservability"]:
+        with pytest.raises(jsonschema.ValidationError):
+            manifest_validator.validate(invalid_manifest)
 
 
 def test_openapi_specs_have_zero_unresolved_refs() -> None:
@@ -187,6 +303,12 @@ def test_all_wire_vectors_match_schemas() -> None:
     ):
         assert def_name in lease_vectors
         _validate_against_definition(lease_schema, def_name, lease_vectors[def_name], section="definitions")
+
+    ops_schema = auragrid_api.load_schema("ops-telemetry.schema.json")
+    ops_vectors = auragrid_api.load_wire_vector("ops_telemetry_vectors.json")
+    for def_name in ("opsLogError", "opsCrashReport", "opsPerfAnomaly"):
+        for payload in ops_vectors["valid"][def_name]:
+            _validate_against_definition(ops_schema, def_name, payload, section="definitions")
 
     ipc_spec = auragrid_api.load_openapi("ipc-bridge.openapi.json")
     ipc_vectors = auragrid_api.load_wire_vector("ipc_bridge_vectors.json")

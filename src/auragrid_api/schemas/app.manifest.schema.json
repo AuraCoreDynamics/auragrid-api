@@ -61,7 +61,8 @@
       "type": "array",
       "items": { "$ref": "#/definitions/contractDependency" }
     },
-    "distribution": { "$ref": "#/definitions/distributionConfig" }
+    "distribution": { "$ref": "#/definitions/distributionConfig" },
+    "observability": { "$ref": "#/definitions/observabilityConfig" }
   },
   "definitions": {
     "masMode": {
@@ -260,6 +261,36 @@
         "tags": {
           "type": "array",
           "items": { "type": "string" }
+        }
+      }
+    },
+    "sloConfig": {
+      "type": "object",
+      "description": "Service-level objective thresholds for startup, endpoint latency, RSS memory, and restart counts.",
+      "additionalProperties": false,
+      "properties": {
+        "maxStartupMs": { "type": "number", "exclusiveMinimum": 0 },
+        "maxEndpointLatencyMs": { "type": "number", "exclusiveMinimum": 0 },
+        "maxRssMb": { "type": "number", "exclusiveMinimum": 0 },
+        "maxRestartCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "observabilityConfig": {
+      "type": "object",
+      "description": "Optional DevSecOps runtime telemetry, SLO thresholds, and automated triage policy.",
+      "additionalProperties": false,
+      "properties": {
+        "slo": { "$ref": "#/definitions/sloConfig" },
+        "triagePolicy": {
+          "type": "string",
+          "enum": ["SUPERVISED", "BOUNDED_AUTONOMOUS"],
+          "default": "SUPERVISED"
+        },
+        "logRingLines": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 10000,
+          "default": 200
         }
       }
     }
